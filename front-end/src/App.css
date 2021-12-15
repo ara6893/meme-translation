@@ -1,0 +1,14 @@
+img{
+    width: 100%;
+}
+
+.related-content{
+    max-width: 200px;
+}
+
+ul:before{
+    content:attr(aria-label);
+    font-size:120%;
+    font-weight:bold;
+    margin-left:-15px;
+}

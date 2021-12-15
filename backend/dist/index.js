@@ -16,14 +16,28 @@ const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const cors_1 = __importDefault(require("cors"));
 const multer_cloud_storage_1 = __importDefault(require("multer-cloud-storage"));
-const textDetection_1 = require("./services/textDetection");
 const dotenv_1 = require("dotenv");
 const morgan_1 = __importDefault(require("morgan"));
 const detection_1 = require("./services/detection");
+const simple_encryptor_1 = require("simple-encryptor");
+const image_1 = require("./services/image");
+const fs_1 = require("fs");
+const crypto_1 = require("crypto");
+const env_const_1 = require("./env.const");
+const base64url_1 = __importDefault(require("base64url"));
 (0, dotenv_1.config)();
+const cipher = (0, simple_encryptor_1.createEncryptor)({
+    key: process.env.KEY,
+    hmac: true,
+    debug: true,
+});
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use((0, morgan_1.default)('tiny'));
+if (!(0, fs_1.existsSync)(env_const_1.PUBLIC_FOLDER)) {
+    (0, fs_1.mkdirSync)(env_const_1.PUBLIC_FOLDER);
+}
+app.use('/public', express_1.default.static(env_const_1.PUBLIC_FOLDER));
 // Create multer object
 const imageUpload = (0, multer_1.default)({
     storage: new multer_cloud_storage_1.default({
@@ -31,15 +45,45 @@ const imageUpload = (0, multer_1.default)({
     }),
 });
 const port = process.env.PORT || 3000;
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+function removeDomainNames(text) {
+    return text
+        .split(/[\s]+/)
+        .filter(e => e.indexOf('.com') === -1)
+        .join(' ');
+}
+function toHash(text) {
+    return (0, crypto_1.createHash)('md5').update(text).digest('hex');
+}
 app.post('/parse/image', imageUpload.single('image'), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (req.file) {
-        const text = yield (0, textDetection_1.detectText)(req.file.uri);
         res.json({
-            translation: yield (0, detection_1.translateText)(text),
+            id: (0, base64url_1.default)(cipher.encrypt(req.file.uri)),
+            imageId: toHash(req.file.uri),
+        });
+    }
+    else {
+        res.sendStatus(400);
+    }
+}));
+app.get('/metadata/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (req.params.id) {
+        const uri = cipher.decrypt(base64url_1.default.decode(req.params.id));
+        console.log(uri);
+        const textEntities = yield (0, detection_1.detectText)(uri);
+        const text = removeDomainNames(textEntities.length ? textEntities[0].description : '');
+        const relevantText = textEntities.filter((e, i) => i > 0 && e.description.indexOf('.com') < 0);
+        const [translationByEntity, translation, webEntities, landmarks] = yield Promise.all([
+            Promise.all(relevantText.map((e) => __awaiter(void 0, void 0, void 0, function* () { return yield (0, detection_1.translateText)(e.description); }))),
+            (0, detection_1.translateText)(text),
+            (0, detection_1.detectWebEntities)(uri),
+            (0, detection_1.detectLandmarks)(uri),
+        ]);
+        yield (0, image_1.updateImage)(toHash(uri), uri, relevantText, translationByEntity);
+        res.json({
+            translation,
             original: text,
+            webEntities,
+            landmarks,
         });
     }
     else {

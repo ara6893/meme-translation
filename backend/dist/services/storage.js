@@ -9,21 +9,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// The ID of your GCS bucket
-const bucketName = 'your-unique-bucket-name';
-// The path to your file to upload
-// const filePath = 'path/to/your/file';
-// The new ID for your GCS file
-// const destFileName = 'your-new-file-name';
+exports.downloadFile = void 0;
 // Imports the Google Cloud client library
 const storage_1 = require("@google-cloud/storage");
 // Creates a client
 const storage = new storage_1.Storage();
-function uploadFile(filePath, destFileName) {
+function getBucketName(gsUri) {
+    const uri = gsUri.replace('gs://', '');
+    return uri.slice(0, uri.indexOf('/'));
+}
+function getFileName(gsUri) {
+    const uri = gsUri.replace('gs://', '');
+    return uri.slice(uri.indexOf('/') + 1);
+}
+function downloadFile(uri) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield storage.bucket(bucketName).upload(filePath, {
-            destination: destFileName,
-        });
-        console.log(`${filePath} uploaded to ${bucketName}`);
+        const options = {};
+        let [response] = yield storage
+            .bucket(getBucketName(uri))
+            .file(getFileName(uri))
+            .download(options);
+        // Downloads the file
+        return response;
     });
 }
+exports.downloadFile = downloadFile;
