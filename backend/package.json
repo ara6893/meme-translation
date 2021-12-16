@@ -26,7 +26,7 @@
         "multer-cloud-storage": "^2.8.0",
         "node-canvas": "^2.7.0",
         "simple-encryptor": "^4.0.0",
-        "tsc": "^2.0.3"
+        "typescript": "^4.5.4"
     },
     "devDependencies": {
         "@types/cors": "^2.8.12",
@@ -40,7 +40,6 @@
         "eslint-config-prettier": "^8.3.0",
         "prettier": "2.5.1",
         "tsc-watch": "^4.5.0",
-        "tslint": "^6.1.3",
-        "typescript": "^4.5.4"
+        "tslint": "^6.1.3"
     }
 }
