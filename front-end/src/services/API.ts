@@ -1,5 +1,7 @@
 export function toApiUrl(url: string): string {
-  return `http://localhost:3000${url}`;
+  return false
+    ? `http://localhost:3000${url}`
+    : `https://github-ara6893-meme-translation-tgzai6eqnq-uc.a.run.app${url}`;
 }
 
 export function get(url: string) {
