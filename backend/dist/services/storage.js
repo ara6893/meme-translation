@@ -13,6 +13,7 @@ exports.uploadFile = exports.downloadFile = void 0;
 // Imports the Google Cloud client library
 const storage_1 = require("@google-cloud/storage");
 const stream_1 = require("stream");
+const uuid_1 = require("uuid");
 // Creates a client
 const storage = new storage_1.Storage();
 const BUCKET_NAME = 'rsss415-asennyey';
@@ -30,15 +31,15 @@ function downloadFile(uri) {
 exports.downloadFile = downloadFile;
 function uploadFile(file) {
     return __awaiter(this, void 0, void 0, function* () {
-        const gcsFile = bucket.file(file.originalname);
+        const fileName = `${(0, uuid_1.v4)()}.${file.originalname.substring(file.originalname.lastIndexOf('.') + 1)}`;
+        const gcsFile = bucket.file(fileName);
         const passthroughStream = new stream_1.PassThrough();
         passthroughStream.write(file.buffer);
         passthroughStream.end();
         return new Promise((res, rej) => {
             passthroughStream.pipe(gcsFile.createWriteStream()).on('finish', () => {
                 // The file upload is complete
-                console.log(gcsFile.baseUrl);
-                res(`gs://${BUCKET_NAME}/${gcsFile.name}`);
+                res(`gs://${BUCKET_NAME}/${fileName}`);
             });
         });
     });

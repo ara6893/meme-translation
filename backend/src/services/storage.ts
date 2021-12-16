@@ -1,6 +1,7 @@
 // Imports the Google Cloud client library
 import { Storage } from '@google-cloud/storage';
 import { PassThrough } from 'stream';
+import { v4 as uuidv4 } from 'uuid';
 
 // Creates a client
 const storage = new Storage();
@@ -20,7 +21,10 @@ export async function downloadFile(uri: string): Promise<Buffer> {
 }
 
 export async function uploadFile(file: Express.Multer.File): Promise<string> {
-  const gcsFile = bucket.file(file.originalname);
+  const fileName = `${uuidv4()}.${file.originalname.substring(
+    file.originalname.lastIndexOf('.') + 1
+  )}`;
+  const gcsFile = bucket.file(fileName);
   const passthroughStream = new PassThrough();
   passthroughStream.write(file.buffer);
   passthroughStream.end();
@@ -28,8 +32,7 @@ export async function uploadFile(file: Express.Multer.File): Promise<string> {
   return new Promise((res, rej) => {
     passthroughStream.pipe(gcsFile.createWriteStream()).on('finish', () => {
       // The file upload is complete
-      console.log(gcsFile.baseUrl!);
-      res(`gs://${BUCKET_NAME}/${gcsFile.name}`);
+      res(`gs://${BUCKET_NAME}/${fileName}`);
     });
   });
 }
