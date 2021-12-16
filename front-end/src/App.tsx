@@ -81,8 +81,7 @@ function App() {
       <div className="col">
         <Form>
           <div className="alert alert-info">
-            To use this site, simply upload a meme into the form below. This will be pass through Google Vision's suite of 
-            ML products and the results will be displayed. 
+            To use this site, simply upload a meme into the form below. This website will show tags and related content pulled from the image.
           </div>
           <Form.Group controlId="image" className="mb-3">
             <Form.Label>Upload an image: </Form.Label>
@@ -116,16 +115,15 @@ function App() {
               </ul>
               : <></>
             }
-            <p>
-              Related Content: <div>
+            <h3>Related Content:</h3> 
+            <div className="col d-flex justify-content-around flex-wrap flex-row">
               {metadata.webEntities?.fullMatchingImages?.map((e, i)=>
                 <img className="related-content" src={e.url} onError={()=>metadata.webEntities?.fullMatchingImages?.splice(i, 1)}/>)
               }
               {metadata.webEntities?.partialMatchingImages?.map((e, i)=>
                 <img className="related-content" src={e.url} onError={()=>metadata.webEntities?.partialMatchingImages?.splice(i, 1)}/>)
               }
-              </div>
-            </p>
+            </div>
           </>
           }
           </>

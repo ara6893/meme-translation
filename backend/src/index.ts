@@ -1,7 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import MulterGoogleCloudStorage from 'multer-cloud-storage';
 import { config } from 'dotenv';
 import morgan from 'morgan';
 import {
@@ -16,6 +15,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { createHash } from 'crypto';
 import { PUBLIC_FOLDER } from './env.const';
 import base64url from 'base64url';
+import { uploadFile } from './services/storage';
 config();
 
 const cipher = createEncryptor({
@@ -36,9 +36,7 @@ app.use('/public', express.static(PUBLIC_FOLDER));
 
 // Create multer object
 const imageUpload = multer({
-  storage: new MulterGoogleCloudStorage({
-    uniformBucketLevelAccess: true,
-  }),
+  storage: multer.memoryStorage(),
 });
 
 const port = process.env.PORT || 3000;
@@ -56,9 +54,10 @@ function toHash(text: string) {
 
 app.post('/parse/image', imageUpload.single('image'), async (req, res) => {
   if (req.file) {
+    const uri = await uploadFile(req.file);
     res.json({
-      id: base64url(cipher.encrypt((req.file as any).uri)),
-      imageId: toHash((req.file as any).uri),
+      id: base64url(cipher.encrypt(uri)),
+      imageId: toHash(uri),
     });
   } else {
     res.sendStatus(400);

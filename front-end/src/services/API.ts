@@ -1,5 +1,5 @@
 export function toApiUrl(url: string): string {
-  return false
+  return true
     ? `http://localhost:3000${url}`
     : `https://github-ara6893-meme-translation-tgzai6eqnq-uc.a.run.app${url}`;
 }

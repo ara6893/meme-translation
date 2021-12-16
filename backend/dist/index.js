@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("multer"));
 const cors_1 = __importDefault(require("cors"));
-const multer_cloud_storage_1 = __importDefault(require("multer-cloud-storage"));
 const dotenv_1 = require("dotenv");
 const morgan_1 = __importDefault(require("morgan"));
 const detection_1 = require("./services/detection");
@@ -25,6 +24,7 @@ const fs_1 = require("fs");
 const crypto_1 = require("crypto");
 const env_const_1 = require("./env.const");
 const base64url_1 = __importDefault(require("base64url"));
+const storage_1 = require("./services/storage");
 (0, dotenv_1.config)();
 const cipher = (0, simple_encryptor_1.createEncryptor)({
     key: process.env.KEY,
@@ -40,9 +40,7 @@ if (!(0, fs_1.existsSync)(env_const_1.PUBLIC_FOLDER)) {
 app.use('/public', express_1.default.static(env_const_1.PUBLIC_FOLDER));
 // Create multer object
 const imageUpload = (0, multer_1.default)({
-    storage: new multer_cloud_storage_1.default({
-        uniformBucketLevelAccess: true,
-    }),
+    storage: multer_1.default.memoryStorage(),
 });
 const port = process.env.PORT || 3000;
 function removeDomainNames(text) {
@@ -56,9 +54,10 @@ function toHash(text) {
 }
 app.post('/parse/image', imageUpload.single('image'), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (req.file) {
+        const uri = yield (0, storage_1.uploadFile)(req.file);
         res.json({
-            id: (0, base64url_1.default)(cipher.encrypt(req.file.uri)),
-            imageId: toHash(req.file.uri),
+            id: (0, base64url_1.default)(cipher.encrypt(uri)),
+            imageId: toHash(uri),
         });
     }
     else {
